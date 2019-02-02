@@ -1,0 +1,1 @@
+[{"model": "simple_click.game", "pk": 1, "fields": {"name": "Single", "game_type": 1}}, {"model": "simple_click.game", "pk": 2, "fields": {"name": "Jodi", "game_type": 2}}, {"model": "simple_click.game", "pk": 3, "fields": {"name": "Single Panel", "game_type": 3}}, {"model": "simple_click.game", "pk": 4, "fields": {"name": "Double Panel", "game_type": 4}}]
