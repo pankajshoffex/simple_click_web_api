@@ -5,7 +5,7 @@ echo ""
 echo "------------------------------------------------------------"
 echo "Initial Django migration"
 echo ""
-
+python manage.py makemigrations
 python manage.py migrate
 
 # Initial fixtures
