@@ -357,7 +357,7 @@ def verify_otp(request):
 
     if not error:
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(username=user_id)
             u = UserProfile.objects.get(user=user)
             if u.otp == otp:
                 error = False

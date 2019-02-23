@@ -34,6 +34,3 @@ def generateOTP():
 
     return OTP
 
-
-print(generateOTP())
-
