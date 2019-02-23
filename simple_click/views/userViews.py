@@ -199,6 +199,28 @@ def get_payment(request, pk):
 
 @csrf_exempt
 @api_view(["POST"])
+@authentication_classes([])
+@permission_classes((AllowAny, ))
+def send_forgot_password_otp(request):
+    error = False
+    msg = ''
+    data = request.data
+    try:
+        user = User.objects.get(username=data.get('username'))
+
+        error = False
+        msg = 'OTP has been send successfully.'
+    except User.DoesNotExist:
+        error = True
+        msg = 'User does not exist.'
+    context_data = dict()
+    context_data['error'] = error
+    context_data['message'] = msg
+    return Response(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["POST"])
 @permission_classes((AllowAny, ))
 def change_password(request):
     context_data = dict()
