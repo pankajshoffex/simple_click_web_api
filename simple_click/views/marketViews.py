@@ -93,7 +93,7 @@ def submit_game_view(request):
                     market=market_object
                 )
                 for bet in bet_list:
-                    if bet.get('bet_amount') > 10:
+                    if bet.get('bet_amount') >= 10:
                         bet_object = Bet.objects.create(
                             player=player_object,
                             bet_number=bet.get('bet_number'),
