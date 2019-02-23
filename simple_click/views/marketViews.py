@@ -12,7 +12,13 @@ from datetime import datetime, timedelta
 def is_time_expired(time_object):
     flag = False
     now = datetime.now() + timedelta(hours=5, minutes=30)
-    if now.time() > time_object:
+    if now.weekday() == 5:  # Saturday
+        if time_object['id'] in [11, 12, 13, 14]:
+            flag = True
+    elif now.weekday() == 6:  # Sunday
+        if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
+            flag = True
+    if now.time() > time_object['market_time']:
         flag = True
     return flag
 
@@ -29,10 +35,9 @@ def get_market_list_view(request):
     queryset = Market.objects.all().values(
         'id', 'market_name', 'market_type', 'market_time'
     )
-    print(list(queryset))
     data_frame = pd.DataFrame(list(queryset))
     data_frame['market_type_name'] = data_frame['market_type'].apply(lambda x: get_market_type_name(x))
-    data_frame['is_expired'] = data_frame['market_time'].apply(lambda x: is_time_expired(x))
+    data_frame['is_expired'] = data_frame.apply(lambda x: is_time_expired(x), axis=1)
     data_frame['market_time'] = data_frame['market_time'].apply(lambda x: x.strftime('%I:%M %p'))
     context_data['result'] = data_frame.to_dict(orient='records')
     return JsonResponse(context_data, status=200)
