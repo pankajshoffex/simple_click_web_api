@@ -318,7 +318,7 @@ def change_otp_password(request):
 
     if not error:
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(username=user_id)
             u = UserProfile.objects.get(user=user)
             if u.otp == otp:
                 user.set_password(confirm_password)
