@@ -32,6 +32,7 @@ class UserProfile(models.Model):
     mobile = models.CharField(max_length=10)
     is_agreement = models.BooleanField(default=False)
     account_balance = models.FloatField(default=0.0)
+    otp = models.IntegerField(default=0, blank=True, null=True)
 
     def __str__(self):
         return self.user.username

@@ -13,6 +13,7 @@ from rest_framework.status import (
 )
 from rest_framework.response import Response
 from simple_click.models import UserProfile, Payment
+from simple_click.helper import generateOTP, send_sms
 
 
 @csrf_exempt
@@ -207,7 +208,10 @@ def send_forgot_password_otp(request):
     data = request.data
     try:
         user = User.objects.get(username=data.get('username'))
-
+        u = UserProfile.objects.get(user=user)
+        u.otp = generateOTP()
+        u.save()
+        send_sms(u.mobile, u.otp)
         error = False
         msg = 'OTP has been send successfully.'
     except User.DoesNotExist:
@@ -280,3 +284,87 @@ def get_account_balance(request):
     context_data['message'] = msg
     context_data['balance'] = balance
     return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes((AllowAny, ))
+def change_otp_password(request):
+    context_data = dict()
+    error = False
+    msg = ''
+    user_id = request.data.get('username')
+    otp = request.data.get('code')
+    password = request.data.get('new_password')
+    confirm_password = request.data.get('confirm_password')
+
+    if not user_id:
+        error = True
+        msg = 'User id is required'
+
+    if not error and not password:
+        error = True
+        msg = 'New password is required.'
+
+    if not error and not confirm_password:
+        error = True
+        msg = 'Confirm Password is required'
+
+    if not error and password and confirm_password:
+        if password != confirm_password:
+            error = True
+            msg = 'Password does not matched.'
+
+    if not error:
+        try:
+            user = User.objects.get(id=user_id)
+            u = UserProfile.objects.get(user=user)
+            if u.otp == otp:
+                user.set_password(confirm_password)
+                user.save()
+                error = False
+                msg = 'Password changed successfully.'
+            else:
+                error = True
+                msg = 'invalid otp'
+        except Exception as e:
+            error = True
+            msg = str(e)
+    context_data['error'] = error
+    context_data['message'] = msg
+    return Response(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes((AllowAny, ))
+def verify_otp(request):
+    context_data = dict()
+    error = False
+    msg = ''
+    user_id = request.data.get('username')
+    otp = request.data.get('code')
+
+    if not user_id:
+        error = True
+        msg = 'User id is required'
+
+    if not error and not otp:
+        error = True
+        msg = 'Please enter OTP'
+
+    if not error:
+        try:
+            user = User.objects.get(id=user_id)
+            u = UserProfile.objects.get(user=user)
+            if u.otp == otp:
+                error = False
+                msg = 'Ok'
+        except Exception as e:
+            error = True
+            msg = 'Invalid OTP'
+    context_data['error'] = error
+    context_data['message'] = msg
+    return Response(context_data, status=HTTP_200_OK)
