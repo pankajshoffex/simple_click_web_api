@@ -11,16 +11,16 @@ from simple_click.helper import get_today_range
 
 
 def is_time_expired(time_object):
-    flag = False
-    now = datetime.now() + timedelta(hours=5, minutes=30)
-    if now.weekday() == 5:  # Saturday
-        if time_object['id'] in [11, 12, 13, 14]:
-            flag = True
-    elif now.weekday() == 6:  # Sunday
-        if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
-            flag = True
-    if now.time() > time_object['market_time']:
-        flag = True
+    flag = True
+    # now = datetime.now() + timedelta(hours=5, minutes=30)
+    # if now.weekday() == 5:  # Saturday
+    #     if time_object['id'] in [11, 12, 13, 14]:
+    #         flag = True
+    # elif now.weekday() == 6:  # Sunday
+    #     if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
+    #         flag = True
+    # if now.time() > time_object['market_time']:
+    #     flag = True
     return flag
 
 
