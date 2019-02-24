@@ -10,6 +10,7 @@ urlpatterns = [
     url('send_forgot_password_otp/', userViews.send_forgot_password_otp),
     url('change_otp_password/', userViews.change_otp_password),
     url('verify_otp/', userViews.verify_otp),
+    url('customer_list/', userViews.customer_list),
     url('get_account_balance/', userViews.get_account_balance),
     url('market_list/', marketViews.get_market_list_view),
     url('submit_game/', marketViews.submit_game_view),

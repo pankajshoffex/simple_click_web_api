@@ -1,10 +1,11 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.db.models import Q, F
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -225,7 +226,7 @@ def send_forgot_password_otp(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((AllowAny, ))
+@permission_classes((IsAuthenticated, ))
 def change_password(request):
     context_data = dict()
     error = False
@@ -268,7 +269,7 @@ def change_password(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((AllowAny, ))
+@permission_classes((IsAuthenticated, ))
 def get_account_balance(request):
     context_data = dict()
     error = False
@@ -367,4 +368,22 @@ def verify_otp(request):
             msg = 'Invalid OTP'
     context_data['error'] = error
     context_data['message'] = msg
+    return Response(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def customer_list(request):
+    error = False
+    msg = ''
+    queryset = UserProfile.objects.filter(user__is_active=True, user__is_superuser=False).annotate(
+        username=F('user__username'),
+    ).values(
+        'id', 'mobile', 'account_balance', 'username'
+    )
+    context_data = dict()
+    context_data['error'] = error
+    context_data['message'] = msg
+    context_data['result'] = queryset
     return Response(context_data, status=HTTP_200_OK)
