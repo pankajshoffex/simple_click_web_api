@@ -255,7 +255,7 @@ def update_market_result(request):
                                 obj.bet.save()
                                 obj.payment_type = 3
                                 obj.transaction_type = 2
-                                obj.balance_amount = u.account_balance
+                                obj.balance_amount += u.account_balance
                                 obj.save()
                             else:
                                 obj.bet.result_status = 2
@@ -270,7 +270,7 @@ def update_market_result(request):
                                     obj.bet.save()
                                     obj.payment_type = 3
                                     obj.transaction_type = 2
-                                    obj.balance_amount = u.account_balance
+                                    obj.balance_amount += u.account_balance
                                     obj.save()
                                 else:
                                     obj.bet.result_status = 2
@@ -285,7 +285,7 @@ def update_market_result(request):
                                     obj.bet.save()
                                     obj.payment_type = 3
                                     obj.transaction_type = 2
-                                    obj.balance_amount = u.account_balance
+                                    obj.balance_amount += u.account_balance
                                     obj.save()
                                 else:
                                     obj.bet.result_status = 2
@@ -308,7 +308,7 @@ def update_market_result(request):
                                         obj.bet.save()
                                         obj.payment_type = 3
                                         obj.transaction_type = 2
-                                        obj.balance_amount = u.account_balance
+                                        obj.balance_amount += u.account_balance
                                         obj.save()
                                     else:
                                         obj.bet.result_status = 2
