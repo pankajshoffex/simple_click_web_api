@@ -440,18 +440,23 @@ def update_customer_balance(request):
                 u.account_balance += amount
                 transaction_type = 2
             elif pay_method == 2:  # Withdraw
-                u.account_balance -= amount
-                transaction_type = 1
-            u.save()
-            PaymentHistory.objects.create(
-                user=u.user,
-                payment_type=pay_method,
-                transaction_type=transaction_type,
-                transaction_amount=amount,
-                balance_amount=u.account_balance
-            )
-            error = False
-            msg = 'Payment Done'
+                if u.account_balance >= amount:
+                    u.account_balance -= amount
+                    transaction_type = 1
+                else:
+                    error = True
+                    msg = 'Insufficient account balance Rs %s' % (str(amount),)
+            if not error:
+                u.save()
+                PaymentHistory.objects.create(
+                    user=u.user,
+                    payment_type=pay_method,
+                    transaction_type=transaction_type,
+                    transaction_amount=amount,
+                    balance_amount=u.account_balance
+                )
+                error = False
+                msg = 'Payment Done'
         except Exception as e:
             error = True
             msg = 'Invalid OTP'
