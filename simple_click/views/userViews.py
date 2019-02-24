@@ -377,7 +377,15 @@ def verify_otp(request):
 def customer_list(request):
     error = False
     msg = ''
-    queryset = UserProfile.objects.filter(user__is_active=True, user__is_superuser=False).annotate(
+    search = request.GET.get('q')
+    queryset = UserProfile.objects.all()
+    if search:
+        queryset = queryset.filter(
+            Q(user__id__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(mobile__icontains=search)
+        )
+    queryset = queryset.filter(user__is_active=True, user__is_superuser=False).annotate(
         username=F('user__username'),
         id=F('user__id')
     ).values(
