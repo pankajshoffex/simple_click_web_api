@@ -13,7 +13,7 @@ from rest_framework.status import (
     HTTP_401_UNAUTHORIZED,
 )
 from rest_framework.response import Response
-from simple_click.models import UserProfile, Payment
+from simple_click.models import UserProfile, Payment, PaymentHistory
 from simple_click.helper import generateOTP, send_sms
 
 
@@ -395,4 +395,60 @@ def customer_list(request):
     context_data['error'] = error
     context_data['message'] = msg
     context_data['result'] = queryset
+    return Response(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def update_customer_balance(request):
+    error = False
+    msg = ''
+    user_id = request.data.get('user_id')
+    pay_method = request.data.get('method')
+    amount = request.data.get('amount')
+    if not user_id:
+        error = True
+        msg = 'User id is required'
+
+    if not error and not pay_method:
+        error = True
+        msg = 'Payment method is required'
+
+    if not error and not amount:
+        error = True
+        msg = 'Amount is required'
+    else:
+        try:
+            amount = float(amount)
+        except ValueError:
+            amount = 0.0
+
+    if not error:
+        try:
+            transaction_type = 1
+            user = User.objects.get(id=user_id)
+            u = UserProfile.objects.get(user=user)
+            if pay_method == 1:  # Deposit
+                u.account_balance += amount
+                transaction_type = 2
+            elif pay_method == 2:  # Withdraw
+                u.account_balance -= amount
+                transaction_type = 1
+            u.save()
+            PaymentHistory.objects.create(
+                user=u.user,
+                payment_type=pay_method,
+                transaction_type=transaction_type,
+                transaction_amount=amount,
+                balance_amount=u.account_balance
+            )
+            error = False
+            msg = 'Payment Done'
+        except Exception as e:
+            error = True
+            msg = 'Invalid OTP'
+    context_data = dict()
+    context_data['error'] = error
+    context_data['message'] = msg
     return Response(context_data, status=HTTP_200_OK)
