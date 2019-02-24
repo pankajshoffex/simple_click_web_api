@@ -12,15 +12,15 @@ from simple_click.helper import get_today_range
 
 def is_time_expired(time_object):
     flag = False
-    # now = datetime.now() + timedelta(hours=5, minutes=30)
-    # if now.weekday() == 5:  # Saturday
-    #     if time_object['id'] in [11, 12, 13, 14]:
-    #         flag = True
-    # elif now.weekday() == 6:  # Sunday
-    #     if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
-    #         flag = True
-    # if now.time() > time_object['market_time']:
-    #     flag = True
+    now = datetime.now() + timedelta(hours=5, minutes=30)
+    if now.weekday() == 5:  # Saturday
+        if time_object['id'] in [11, 12, 13, 14]:
+            flag = True
+    elif now.weekday() == 6:  # Sunday
+        if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
+            flag = True
+    if now.time() > time_object['market_time']:
+        flag = True
     return flag
 
 
@@ -237,8 +237,11 @@ def update_market_result(request):
                     panel=panel,
                     panel_type=panel_type
                 )
+                date_range = get_today_range()
+                if game_result.market_id in [13, 14]:
+                    date_range = get_today_range(is_past_date=True)
                 payment_history = PaymentHistory.objects.filter(
-                    transaction_date__range=get_today_range(),
+                    transaction_date__range=date_range,
                     player__isnull=False,
                     bet__isnull=False,
                     payment_type=4
@@ -301,7 +304,7 @@ def update_market_result(request):
                         g_result = GameResult.objects.filter(
                             market__market_name=game_result.market.market_name,
                             market__market_type=1,
-                            result_date__range=get_today_range()
+                            result_date__range=date_range
                         ).first()
 
                         if g_result:
@@ -340,7 +343,7 @@ def game_result_list(request):
     error = False
     msg = ''
     context_data = dict()
-    game_result = GameResult.objects.filter(result_date__range=get_today_range()).annotate(
+    game_result = GameResult.objects.filter(result_date__range=get_today_range(is_past_date=True)).annotate(
         market_name=F('market__market_name'),
         market_type=F('market__market_type')
     ).values(
@@ -349,4 +352,109 @@ def game_result_list(request):
     context_data['error'] = error
     context_data['message'] = msg
     context_data['result'] = list(game_result)
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes((AllowAny, ))
+def daily_result(request):
+    error = False
+    msg = ''
+    result = dict()
+    game_result = GameResult.objects.values(
+        'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id'
+    )
+    time_bazaar_open = game_result.filter(market_id=1).first()
+    if time_bazaar_open:
+        time_bazaar_open = dict(time_bazaar_open)
+    time_bazaar_close = game_result.filter(market_id=2).first()
+    if time_bazaar_close:
+        time_bazaar_close = dict(time_bazaar_close)
+    milan_day_open = game_result.filter(market_id=3).first()
+    if milan_day_open:
+        milan_day_open = dict(milan_day_open)
+    milan_day_close = game_result.filter(market_id=4).first()
+    if milan_day_close:
+        milan_day_close = dict(milan_day_close)
+    rajdhani_day_open = game_result.filter(market_id=5).first()
+    if rajdhani_day_open:
+        rajdhani_day_open = dict(rajdhani_day_open)
+    rajdhani_day_close = game_result.filter(market_id=6).first()
+    if rajdhani_day_close:
+        rajdhani_day_close = dict(rajdhani_day_close)
+    kalyan_open = game_result.filter(market_id=7).first()
+    if kalyan_open:
+        kalyan_open = dict(kalyan_open)
+    kalyan_close = game_result.filter(market_id=8).first()
+    if kalyan_close:
+        kalyan_close = dict(kalyan_close)
+    milan_night_open = game_result.filter(market_id=9).first()
+    if milan_night_open:
+        milan_night_open = dict(milan_night_open)
+    milan_night_close = game_result.filter(market_id=10).first()
+    if milan_night_close:
+        milan_night_close = dict(milan_night_close)
+    rajdhani_night_open = game_result.filter(market_id=11).first()
+    if rajdhani_night_open:
+        rajdhani_night_open = dict(rajdhani_night_open)
+    rajdhani_night_close = game_result.filter(market_id=12).first()
+    if rajdhani_night_close:
+        rajdhani_night_close = dict(rajdhani_night_close)
+    main_mumbai_open = game_result.filter(market_id=13).first()
+    if main_mumbai_open:
+        main_mumbai_open = dict(main_mumbai_open)
+    main_mumbai_close = game_result.filter(market_id=14).first()
+    if main_mumbai_close:
+        main_mumbai_close = dict(main_mumbai_close)
+    result['time_bazaar_open'] = time_bazaar_open
+    result['time_bazaar_close'] = time_bazaar_close
+    result['milan_day_open'] = milan_day_open
+    result['milan_day_close'] = milan_day_close
+    result['rajdhani_day_open'] = rajdhani_day_open
+    result['rajdhani_day_close'] = rajdhani_day_close
+    result['kalyan_open'] = kalyan_open
+    result['kalyan_close'] = kalyan_close
+    result['milan_night_open'] = milan_night_open
+    result['milan_night_close'] = milan_night_close
+    result['rajdhani_night_open'] = rajdhani_night_open
+    result['rajdhani_night_close'] = rajdhani_night_close
+    result['main_mumbai_open'] = main_mumbai_open
+    result['main_mumbai_close'] = main_mumbai_close
+    context_data = dict()
+    context_data['error'] = error
+    context_data['message'] = msg
+    context_data['result'] = result
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def game_report(request):
+    error = False
+    msg = ''
+    market = request.GET.get('market')
+    context_data = dict()
+    game_result = PaymentHistory.objects.filter(
+        player__isnull=False, bet__isnull=False, player__market_id=market,
+        transaction_date__range=get_today_range(is_past_date=True)
+    )
+    result = {}
+    for i in game_result:
+        if i.player.game_id in result:
+            if i.bet.bet_number in result[i.player.game_id]:
+                result[i.player.game_id][i.bet.bet_number] += i.bet.bet_amount
+            else:
+                result[i.player.game_id][i.bet.bet_number] = i.bet.bet_amount
+        else:
+            result[i.player.game_id] = {}
+            if i.bet.bet_number in result[i.player.game_id]:
+                result[i.player.game_id][i.bet.bet_number] += i.bet.bet_amount
+            else:
+                result[i.player.game_id][i.bet.bet_number] = i.bet.bet_amount
+    context_data['error'] = error
+    context_data['message'] = msg
+    context_data['result'] = result
     return JsonResponse(context_data, status=200)

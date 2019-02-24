@@ -19,4 +19,6 @@ urlpatterns = [
     url('get_customer_balance_history/', marketViews.get_customer_balance_history),
     url('update_market_result/', marketViews.update_market_result),
     url('game_result_list/', marketViews.game_result_list),
+    url('daily_result/', marketViews.daily_result),
+    url('game_report/', marketViews.game_report),
 ]

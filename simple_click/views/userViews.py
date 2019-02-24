@@ -185,6 +185,7 @@ def get_payment(request, pk):
             payment = Payment.objects.get(user_id=pk)
             result = {
                 'user_id': payment.user.id,
+                'username': payment.user.username,
                 'account_no': payment.account_no,
                 'account_holder_name': payment.account_holder_name,
                 'bank_name': payment.bank_name,
