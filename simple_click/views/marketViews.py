@@ -11,7 +11,7 @@ from simple_click.helper import get_today_range
 
 
 def is_time_expired(time_object):
-    flag = True
+    flag = False
     # now = datetime.now() + timedelta(hours=5, minutes=30)
     # if now.weekday() == 5:  # Saturday
     #     if time_object['id'] in [11, 12, 13, 14]:
@@ -246,8 +246,8 @@ def update_market_result(request):
                 for obj in payment_history:
                     u = UserProfile.objects.get(user=obj.player.user)
                     if game_result.market.market_type == obj.player.market.market_type:  # OPEN
-                        if obj.player.game.game_type == 1: # single
-                            if obj.bet.bet_number == game_result.single:
+                        if int(obj.player.game.game_type) == 1: # single
+                            if int(obj.bet.bet_number) == int(game_result.single):
                                 obj.bet.win_amount = obj.bet.bet_amount * 9
                                 obj.bet.result_status = 1
                                 u.account_balance += obj.bet.win_amount
@@ -260,9 +260,9 @@ def update_market_result(request):
                             else:
                                 obj.bet.result_status = 2
                                 obj.bet.save()
-                        if game_result.panel_type == 1:
-                            if obj.player.game.game_type == 3:
-                                if obj.bet.bet_number == game_result.panel:
+                        if int(game_result.panel_type) == 1:
+                            if int(obj.player.game.game_type) == 3:
+                                if int(obj.bet.bet_number) == int(game_result.panel):
                                     obj.bet.win_amount = obj.bet.bet_amount * 130
                                     obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
@@ -275,9 +275,12 @@ def update_market_result(request):
                                 else:
                                     obj.bet.result_status = 2
                                     obj.bet.save()
-                        elif game_result.panel_type == 2:
-                            if obj.player.game.game_type == 4:
-                                if obj.bet.bet_number == game_result.panel:
+                            elif int(obj.player.game.game_type) == 4:
+                                obj.bet.result_status = 2
+                                obj.bet.save()
+                        elif int(game_result.panel_type) == 2:
+                            if int(obj.player.game.game_type) == 4:
+                                if int(obj.bet.bet_number) == int(game_result.panel):
                                     obj.bet.win_amount = obj.bet.bet_amount * 260
                                     obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
@@ -290,30 +293,35 @@ def update_market_result(request):
                                 else:
                                     obj.bet.result_status = 2
                                     obj.bet.save()
+                            elif int(obj.player.game.game_type) == 3:
+                                obj.bet.result_status = 2
+                                obj.bet.save()
 
-                    if game_result.market.market_type == 2:
+                    if int(game_result.market.market_type) == 2:
                         g_result = GameResult.objects.filter(
-                            market_id=game_result.market.id - 1,
+                            market__market_name=game_result.market.market_name,
+                            market__market_type=1,
                             result_date__range=get_today_range()
                         ).first()
 
                         if g_result:
-                            if obj.player.game.game_type == 2:
-                                if game_result.single == g_result.single:
-                                    if obj.bet.bet_number == int(str(game_result.single) + str(g_result.single)):
-                                        obj.bet.win_amount = obj.bet.bet_amount * 90
-                                        obj.bet.result_status = 1
-                                        u.account_balance += obj.bet.win_amount
-                                        u.save()
-                                        obj.bet.save()
-                                        obj.payment_type = 3
-                                        obj.transaction_type = 2
-                                        obj.balance_amount += u.account_balance
-                                        obj.save()
-                                    else:
-                                        obj.bet.result_status = 2
-                                        obj.bet.save()
-
+                            if int(obj.player.game.game_type) == 2:
+                                b = int(obj.bet.bet_number)
+                                if len(str(obj.bet.bet_number)) == 1:
+                                    b = int('0' + str(obj.bet.bet_number))
+                                if b == int(str(g_result.single) + str(game_result.single)):
+                                    obj.bet.win_amount = obj.bet.bet_amount * 90
+                                    obj.bet.result_status = 1
+                                    u.account_balance += obj.bet.win_amount
+                                    u.save()
+                                    obj.bet.save()
+                                    obj.payment_type = 3
+                                    obj.transaction_type = 2
+                                    obj.balance_amount += u.account_balance
+                                    obj.save()
+                                else:
+                                    obj.bet.result_status = 2
+                                    obj.bet.save()
             error = False
             msg = 'Ok'
         except Exception as e:
@@ -328,14 +336,15 @@ def update_market_result(request):
 @csrf_exempt
 @api_view(["GET"])
 @permission_classes((IsAuthenticated, ))
-def game_result_list():
+def game_result_list(request):
     error = False
     msg = ''
     context_data = dict()
     game_result = GameResult.objects.filter(result_date__range=get_today_range()).annotate(
-        market_name=F('market__market_name')
+        market_name=F('market__market_name'),
+        market_type=F('market__market_type')
     ).values(
-        'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id', 'market_name'
+        'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id', 'market_name', 'market_type'
     )
     context_data['error'] = error
     context_data['message'] = msg
