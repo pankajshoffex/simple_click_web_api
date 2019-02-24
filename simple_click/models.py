@@ -25,6 +25,11 @@ TRANSACTION_TYPE = (
     (2, 'Credit')
 )
 
+PANEL_TYPE = (
+    (1, 'Single'),
+    (2, 'Double'),
+)
+
 
 # Create your models here.
 class UserProfile(models.Model):
@@ -105,3 +110,11 @@ class PaymentHistory(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+class GameResult(models.Model):
+    market = models.ForeignKey(Market, on_delete=models.CASCADE)
+    single = models.IntegerField()
+    panel = models.IntegerField()
+    panel_type = models.IntegerField(choices=PANEL_TYPE, default=1)
+    result_date = models.DateTimeField(auto_now_add=True)

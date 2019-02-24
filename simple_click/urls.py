@@ -17,4 +17,6 @@ urlpatterns = [
     url('submit_game/', marketViews.submit_game_view),
     url('get_payment_history/', marketViews.get_payment_history),
     url('get_customer_balance_history/', marketViews.get_customer_balance_history),
+    url('update_market_result/', marketViews.update_market_result),
+    url('game_result_list/', marketViews.game_result_list),
 ]

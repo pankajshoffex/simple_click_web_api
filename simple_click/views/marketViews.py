@@ -1,4 +1,4 @@
-from simple_click.models import Market, Game, Player, Payment, PaymentHistory, Bet, UserProfile
+from simple_click.models import Market, Game, Player, Payment, PaymentHistory, Bet, UserProfile, GameResult
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
@@ -7,6 +7,7 @@ from django.db.models import F
 from django.http import JsonResponse
 import pandas as pd
 from datetime import datetime, timedelta
+from simple_click.helper import get_today_range
 
 
 def is_time_expired(time_object):
@@ -185,4 +186,134 @@ def get_customer_balance_history(request):
         msg = str(e)
     context_data['error'] = error
     context_data['message'] = msg
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def update_market_result(request):
+    error = False
+    msg = ''
+    market = request.data.get('market')
+    single = request.data.get('single')
+    panel = request.data.get('panel')
+    panel_type = request.data.get('panel_type')
+    if not error and not market:
+        error = True
+        msg = 'Please select market'
+
+    if not error and not single:
+        error = True
+        msg = 'Please select single'
+
+    if not error and not panel:
+        error = True
+        msg = 'Please select panel'
+
+    if not error and not panel_type:
+        error = True
+        msg = 'Please select panel type'
+
+    if not error:
+        if not request.user.is_superuser:
+            error = True
+            msg = 'You are not the admin user'
+
+    if not error:
+        try:
+            with transaction.atomic():
+                game_result = GameResult.objects.create(
+                    market_id=market,
+                    single=single,
+                    panel=panel,
+                    panel_type=panel_type
+                )
+                payment_history = PaymentHistory.objects.filter(
+                    transaction_date__range=get_today_range(),
+                    player__isnull=False,
+                    bet__isnull=False,
+                    payment_type=4
+                )
+                for obj in payment_history:
+                    u = UserProfile.objects.get(user=obj.player.user)
+                    if game_result.market.market_type == obj.player.market.market_type:  # OPEN
+                        if obj.player.game.game_type == 1: # single
+                            if obj.bet.bet_number == game_result.single:
+                                obj.bet.win_amount = obj.bet.bet_amount * 9
+                                u.account_balance += obj.bet.win_amount
+                                u.save()
+                                obj.bet.save()
+                                obj.payment_type = 3
+                                obj.transaction_type = 2
+                                obj.balance_amount = u.account_balance
+                                obj.save()
+                        if game_result.panel_type == 1:
+                            if obj.player.game.game_type == 3:
+                                if obj.bet.bet_number == game_result.panel:
+                                    obj.bet.win_amount = obj.bet.bet_amount * 130
+                                    u.account_balance += obj.bet.win_amount
+                                    u.save()
+                                    obj.bet.save()
+                                    obj.payment_type = 3
+                                    obj.transaction_type = 2
+                                    obj.balance_amount = u.account_balance
+                                    obj.save()
+                        elif game_result.panel_type == 2:
+                            if obj.player.game.game_type == 4:
+                                if obj.bet.bet_number == game_result.panel:
+                                    obj.bet.win_amount = obj.bet.bet_amount * 260
+                                    u.account_balance += obj.bet.win_amount
+                                    u.save()
+                                    obj.bet.save()
+                                    obj.payment_type = 3
+                                    obj.transaction_type = 2
+                                    obj.balance_amount = u.account_balance
+                                    obj.save()
+
+                    if game_result.market.market_type == 2:
+                        g_result = GameResult.objects.filter(
+                            market_id=game_result.market.id - 1,
+                            result_date__range=get_today_range()
+                        ).first()
+
+                        if g_result:
+                            if obj.player.game.game_type == 2:
+                                if game_result.single == g_result.single:
+                                    if obj.bet.bet_number == int(str(game_result.single) + str(g_result.single)):
+                                        obj.bet.win_amount = obj.bet.bet_amount * 90
+                                        u.account_balance += obj.bet.win_amount
+                                        u.save()
+                                        obj.bet.save()
+                                        obj.payment_type = 3
+                                        obj.transaction_type = 2
+                                        obj.balance_amount = u.account_balance
+                                        obj.save()
+
+            error = False
+            msg = 'Ok'
+        except Exception as e:
+            error = True
+            msg = str(e)
+    context_data = dict()
+    context_data['error'] = error
+    context_data['message'] = msg
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def game_result_list():
+    error = False
+    msg = ''
+    context_data = dict()
+    game_result = GameResult.objects.filter(result_date__range=get_today_range()).annotate(
+        market_name=F('market__market_name')
+    ).values(
+        'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id', 'market_name'
+    )
+    context_data['error'] = error
+    context_data['message'] = msg
+    context_data['result'] = list(game_result)
     return JsonResponse(context_data, status=200)

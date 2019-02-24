@@ -1,6 +1,7 @@
 import requests
 # import library
 import math, random
+import datetime
 
 
 def send_sms(mobile, code):
@@ -34,3 +35,8 @@ def generateOTP():
 
     return OTP
 
+
+def get_today_range():
+    today_min = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+    today_max = datetime.datetime.combine(datetime.date.today(), datetime.time.max)
+    return [today_min, today_max]

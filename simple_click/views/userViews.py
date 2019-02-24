@@ -432,6 +432,11 @@ def update_customer_balance(request):
             amount = 0.0
 
     if not error:
+        if not request.user.is_superuser:
+            error = True
+            msg = 'You are not the admin user'
+
+    if not error:
         try:
             transaction_type = 1
             user = User.objects.get(id=user_id)
