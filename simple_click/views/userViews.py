@@ -379,6 +379,7 @@ def customer_list(request):
     msg = ''
     queryset = UserProfile.objects.filter(user__is_active=True, user__is_superuser=False).annotate(
         username=F('user__username'),
+        id=F('user__id')
     ).values(
         'id', 'mobile', 'account_balance', 'username'
     )
