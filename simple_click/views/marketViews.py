@@ -2,7 +2,7 @@ from simple_click.models import Market, Game, Player, Payment, PaymentHistory, B
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db.models import F
 from django.http import JsonResponse
 import pandas as pd
@@ -128,7 +128,7 @@ def submit_game_view(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((AllowAny, ))
+@permission_classes((IsAuthenticated, ))
 def get_payment_history(request):
     context_data = dict()
     error = False
@@ -142,6 +142,40 @@ def get_payment_history(request):
         ).values(
             'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
             'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game'
+        )
+        context_data['result'] = list(queryset)
+        error = False
+        msg = ''
+    except Exception as e:
+        error = True
+        msg = str(e)
+    context_data['error'] = error
+    context_data['message'] = msg
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def get_customer_balance_history(request):
+    context_data = dict()
+    error = False
+    msg = ''
+    payment_type = request.GET.get('payment_type')
+    try:
+        payment_type = int(payment_type)
+    except ValueError:
+        payment_type = 1
+
+    try:
+        queryset = PaymentHistory.objects.filter(
+            user_id=request.user, payment_type=payment_type
+        ).order_by('-transaction_date').annotate(
+            transaction_id=F('id'),
+            player_game=F('player__game__name')
+        ).values(
+            'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
+            'payment_type'
         )
         context_data['result'] = list(queryset)
         error = False
