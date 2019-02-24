@@ -414,6 +414,13 @@ def update_customer_balance(request):
     if not error and not pay_method:
         error = True
         msg = 'Payment method is required'
+    else:
+        try:
+            pay_method = int(pay_method)
+        except ValueError:
+            pay_method = 0
+            error = True
+            msg = 'Payment method is required'
 
     if not error and not amount:
         error = True
