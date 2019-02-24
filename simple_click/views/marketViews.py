@@ -136,13 +136,21 @@ def get_payment_history(request):
     msg = ''
     try:
         queryset = PaymentHistory.objects.filter(
-            user_id=request.user, payment_type__in=[3, 4]
+            user_id=request.user,
+            payment_type__in=[3, 4],
         ).order_by('-transaction_date').annotate(
             transaction_id=F('id'),
-            player_game=F('player__game__name')
+            player_game=F('player__game__name'),
+            market_name=F('player__market__market_name'),
+            market_type=F('player__market__market_type'),
+            bet_number=F('bet__bet_number'),
+            bet_amount=F('bet__bet_amount'),
+            win_amount=F('bet__win_amount'),
+            result_status=F('bet__result_status')
         ).values(
             'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
-            'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game'
+            'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'market_name', 'market_type',
+            'bet_number', 'bet_amount', 'win_amount', 'result_status'
         )
         context_data['result'] = list(queryset)
         error = False
@@ -241,6 +249,7 @@ def update_market_result(request):
                         if obj.player.game.game_type == 1: # single
                             if obj.bet.bet_number == game_result.single:
                                 obj.bet.win_amount = obj.bet.bet_amount * 9
+                                obj.bet.result_status = 1
                                 u.account_balance += obj.bet.win_amount
                                 u.save()
                                 obj.bet.save()
@@ -248,10 +257,14 @@ def update_market_result(request):
                                 obj.transaction_type = 2
                                 obj.balance_amount = u.account_balance
                                 obj.save()
+                            else:
+                                obj.bet.result_status = 2
+                                obj.bet.save()
                         if game_result.panel_type == 1:
                             if obj.player.game.game_type == 3:
                                 if obj.bet.bet_number == game_result.panel:
                                     obj.bet.win_amount = obj.bet.bet_amount * 130
+                                    obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
                                     u.save()
                                     obj.bet.save()
@@ -259,10 +272,14 @@ def update_market_result(request):
                                     obj.transaction_type = 2
                                     obj.balance_amount = u.account_balance
                                     obj.save()
+                                else:
+                                    obj.bet.result_status = 2
+                                    obj.bet.save()
                         elif game_result.panel_type == 2:
                             if obj.player.game.game_type == 4:
                                 if obj.bet.bet_number == game_result.panel:
                                     obj.bet.win_amount = obj.bet.bet_amount * 260
+                                    obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
                                     u.save()
                                     obj.bet.save()
@@ -270,6 +287,9 @@ def update_market_result(request):
                                     obj.transaction_type = 2
                                     obj.balance_amount = u.account_balance
                                     obj.save()
+                                else:
+                                    obj.bet.result_status = 2
+                                    obj.bet.save()
 
                     if game_result.market.market_type == 2:
                         g_result = GameResult.objects.filter(
@@ -282,6 +302,7 @@ def update_market_result(request):
                                 if game_result.single == g_result.single:
                                     if obj.bet.bet_number == int(str(game_result.single) + str(g_result.single)):
                                         obj.bet.win_amount = obj.bet.bet_amount * 90
+                                        obj.bet.result_status = 1
                                         u.account_balance += obj.bet.win_amount
                                         u.save()
                                         obj.bet.save()
@@ -289,6 +310,9 @@ def update_market_result(request):
                                         obj.transaction_type = 2
                                         obj.balance_amount = u.account_balance
                                         obj.save()
+                                    else:
+                                        obj.bet.result_status = 2
+                                        obj.bet.save()
 
             error = False
             msg = 'Ok'
