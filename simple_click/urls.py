@@ -3,6 +3,7 @@ from simple_click.views import userViews, marketViews
 
 urlpatterns = [
     url('api-token-auth/', userViews.login),
+    url('logout/', userViews.logout),
     url('new_user/', userViews.new_user),
     url('add_payment/', userViews.add_payment),
     url('get_payment/(?P<pk>\d+)/$', userViews.get_payment),

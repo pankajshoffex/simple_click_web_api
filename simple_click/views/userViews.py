@@ -48,6 +48,24 @@ def login(request):
 
 @csrf_exempt
 @api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def logout(request):
+    try:
+        token= Token.objects.get(user=request.user)
+        token.delete()
+        error = False
+        msg = 'Logout Successfully.'
+    except Exception as e:
+        error = True
+        msg = str(e)
+    context_data = dict()
+    context_data['error'] = error
+    context_data['result'] = msg
+    return JsonResponse(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["POST"])
 @authentication_classes([])
 @permission_classes((AllowAny, ))
 def new_user(request):
