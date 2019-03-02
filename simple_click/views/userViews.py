@@ -167,8 +167,8 @@ def add_payment(request):
             payment = Payment.objects.filter(user_id=user_id).first()
             if payment:
                 payment.account_no = account_no
-                payment.account_holder_name = account_holder_name,
-                payment.bank_name = bank_name,
+                payment.account_holder_name = account_holder_name
+                payment.bank_name = bank_name
                 payment.ifsc_code = ifsc_code
                 payment.save()
             else:
