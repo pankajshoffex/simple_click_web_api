@@ -249,7 +249,7 @@ def update_market_result(request):
                 for obj in payment_history:
                     u = UserProfile.objects.get(user=obj.player.user)
                     if game_result.market.market_type == obj.player.market.market_type:  # OPEN
-                        if int(obj.player.game.game_type) == 1: # single
+                        if int(obj.player.game.game_type) == 1:  # single
                             if int(obj.bet.bet_number) == int(game_result.single):
                                 obj.bet.win_amount = obj.bet.bet_amount * 9
                                 obj.bet.result_status = 1
@@ -366,46 +366,46 @@ def daily_result(request):
     game_result = GameResult.objects.values(
         'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id'
     )
-    time_bazaar_open = game_result.filter(market_id=1).first()
+    time_bazaar_open = game_result.filter(market_id=1).order_by('-id').first()
     if time_bazaar_open:
         time_bazaar_open = dict(time_bazaar_open)
-    time_bazaar_close = game_result.filter(market_id=2).first()
+    time_bazaar_close = game_result.filter(market_id=2).order_by('-id').first()
     if time_bazaar_close:
         time_bazaar_close = dict(time_bazaar_close)
-    milan_day_open = game_result.filter(market_id=3).first()
+    milan_day_open = game_result.filter(market_id=3).order_by('-id').first()
     if milan_day_open:
         milan_day_open = dict(milan_day_open)
-    milan_day_close = game_result.filter(market_id=4).first()
+    milan_day_close = game_result.filter(market_id=4).order_by('-id').first()
     if milan_day_close:
         milan_day_close = dict(milan_day_close)
-    rajdhani_day_open = game_result.filter(market_id=5).first()
+    rajdhani_day_open = game_result.filter(market_id=5).order_by('-id').first()
     if rajdhani_day_open:
         rajdhani_day_open = dict(rajdhani_day_open)
-    rajdhani_day_close = game_result.filter(market_id=6).first()
+    rajdhani_day_close = game_result.filter(market_id=6).order_by('-id').first()
     if rajdhani_day_close:
         rajdhani_day_close = dict(rajdhani_day_close)
-    kalyan_open = game_result.filter(market_id=7).first()
+    kalyan_open = game_result.filter(market_id=7).order_by('-id').first()
     if kalyan_open:
         kalyan_open = dict(kalyan_open)
-    kalyan_close = game_result.filter(market_id=8).first()
+    kalyan_close = game_result.filter(market_id=8).order_by('-id').first()
     if kalyan_close:
         kalyan_close = dict(kalyan_close)
-    milan_night_open = game_result.filter(market_id=9).first()
+    milan_night_open = game_result.filter(market_id=9).order_by('-id').first()
     if milan_night_open:
         milan_night_open = dict(milan_night_open)
-    milan_night_close = game_result.filter(market_id=10).first()
+    milan_night_close = game_result.filter(market_id=10).order_by('-id').first()
     if milan_night_close:
         milan_night_close = dict(milan_night_close)
-    rajdhani_night_open = game_result.filter(market_id=11).first()
+    rajdhani_night_open = game_result.filter(market_id=11).order_by('-id').first()
     if rajdhani_night_open:
         rajdhani_night_open = dict(rajdhani_night_open)
-    rajdhani_night_close = game_result.filter(market_id=12).first()
+    rajdhani_night_close = game_result.filter(market_id=12).order_by('-id').first()
     if rajdhani_night_close:
         rajdhani_night_close = dict(rajdhani_night_close)
-    main_mumbai_open = game_result.filter(market_id=13).first()
+    main_mumbai_open = game_result.filter(market_id=13).order_by('-id').first()
     if main_mumbai_open:
         main_mumbai_open = dict(main_mumbai_open)
-    main_mumbai_close = game_result.filter(market_id=14).first()
+    main_mumbai_close = game_result.filter(market_id=14).order_by('-id').first()
     if main_mumbai_close:
         main_mumbai_close = dict(main_mumbai_close)
     result['time_bazaar_open'] = time_bazaar_open
