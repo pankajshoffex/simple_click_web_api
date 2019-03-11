@@ -211,9 +211,12 @@ def update_market_result(request):
         error = True
         msg = 'Please select market'
 
-    if not error and not single:
-        error = True
-        msg = 'Please select single'
+    if not error:
+        try:
+            single = int(single)
+        except Exception as e:
+            error = True
+            msg = 'Please select single'
 
     if not error and not panel:
         error = True
