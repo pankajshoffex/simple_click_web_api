@@ -343,7 +343,7 @@ def game_result_list(request):
     error = False
     msg = ''
     context_data = dict()
-    game_result = GameResult.objects.filter(result_date__range=get_today_range()).annotate(
+    game_result = GameResult.objects.filter(result_date__range=get_today_range()).order_by('-id').annotate(
         market_name=F('market__market_name'),
         market_type=F('market__market_type')
     ).values(
