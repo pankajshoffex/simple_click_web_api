@@ -251,7 +251,7 @@ def update_market_result(request):
                 )
                 for obj in payment_history:
                     u = UserProfile.objects.get(user=obj.player.user)
-                    if game_result.market.market_type == obj.player.market.market_type:  # OPEN
+                    if game_result.market.id == obj.player.market.id:  # OPEN
                         if int(obj.player.game.game_type) == 1:  # single
                             if int(obj.bet.bet_number) == int(game_result.single):
                                 obj.bet.win_amount = obj.bet.bet_amount * 9
