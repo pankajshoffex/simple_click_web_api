@@ -308,7 +308,7 @@ def update_market_result(request):
                         g_result = GameResult.objects.filter(
                             market_id=calculate_market_id,
                             result_date__range=date_range
-                        ).first()
+                        ).order_by('-id').first()
 
                         if g_result:
                             if int(obj.player.game.game_type) == 2:
