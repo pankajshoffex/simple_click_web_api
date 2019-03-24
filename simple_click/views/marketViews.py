@@ -141,6 +141,7 @@ def get_payment_history(request):
         ).order_by('-transaction_date').annotate(
             transaction_id=F('id'),
             player_game=F('player__game__name'),
+            player_game_type=F('player__game__game_type'),
             market_name=F('player__market__market_name'),
             market_type=F('player__market__market_type'),
             bet_number=F('bet__bet_number'),
@@ -149,7 +150,7 @@ def get_payment_history(request):
             result_status=F('bet__result_status')
         ).values(
             'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
-            'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'market_name', 'market_type',
+            'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'player_game_type', 'market_name', 'market_type',
             'bet_number', 'bet_amount', 'win_amount', 'result_status'
         )
         context_data['result'] = list(queryset)
