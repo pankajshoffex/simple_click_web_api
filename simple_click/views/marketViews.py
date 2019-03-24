@@ -315,8 +315,8 @@ def update_market_result(request):
                             if int(obj.player.game.game_type) == 2:
                                 b = int(obj.bet.bet_number)
                                 if len(str(obj.bet.bet_number)) == 1:
-                                    b = int('0' + str(obj.bet.bet_number))
-                                if b == int(str(g_result.single) + str(game_result.single)):
+                                    b = '0' + str(obj.bet.bet_number)
+                                if b == str(g_result.single) + str(game_result.single):
                                     obj.bet.win_amount = obj.bet.bet_amount * 90
                                     obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
