@@ -313,7 +313,7 @@ def update_market_result(request):
 
                         if g_result:
                             if int(obj.player.game.game_type) == 2:
-                                if obj.bet.result_status != 2:
+                                if obj.bet.result_status == 3:
                                     b = str(obj.bet.bet_number)
                                     if len(b) == 1:
                                         b = '0' + b
