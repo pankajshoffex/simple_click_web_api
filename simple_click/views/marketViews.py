@@ -313,22 +313,23 @@ def update_market_result(request):
 
                         if g_result:
                             if int(obj.player.game.game_type) == 2:
-                                b = str(obj.bet.bet_number)
-                                if len(b) == 1:
-                                    b = '0' + b
-                                if b == str(g_result.single) + str(game_result.single):
-                                    obj.bet.win_amount = obj.bet.bet_amount * 90
-                                    obj.bet.result_status = 1
-                                    u.account_balance += obj.bet.win_amount
-                                    u.save()
-                                    obj.bet.save()
-                                    obj.payment_type = 3
-                                    obj.transaction_type = 2
-                                    obj.balance_amount += u.account_balance
-                                    obj.save()
-                                else:
-                                    obj.bet.result_status = 2
-                                    obj.bet.save()
+                                if obj.bet.result_status != 2:
+                                    b = str(obj.bet.bet_number)
+                                    if len(b) == 1:
+                                        b = '0' + b
+                                    if b == str(g_result.single) + str(game_result.single):
+                                        obj.bet.win_amount = obj.bet.bet_amount * 90
+                                        obj.bet.result_status = 1
+                                        u.account_balance += obj.bet.win_amount
+                                        u.save()
+                                        obj.bet.save()
+                                        obj.payment_type = 3
+                                        obj.transaction_type = 2
+                                        obj.balance_amount += u.account_balance
+                                        obj.save()
+                                    else:
+                                        obj.bet.result_status = 2
+                                        obj.bet.save()
             error = False
             msg = 'Ok'
         except Exception as e:
