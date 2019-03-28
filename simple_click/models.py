@@ -18,6 +18,7 @@ PAYMENT_TYPE = (
     (2, 'Withdraw'),
     (3, 'Win'),
     (4, 'Play'),
+    (5, 'Loss'),
 )
 
 TRANSACTION_TYPE = (

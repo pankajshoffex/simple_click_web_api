@@ -267,6 +267,9 @@ def update_market_result(request):
                             else:
                                 obj.bet.result_status = 2
                                 obj.bet.save()
+                                obj.payment_type = 5
+                                obj.transaction_type = 1
+                                obj.save()
                         if int(game_result.panel_type) == 1:
                             if int(obj.player.game.game_type) == 3:
                                 if int(obj.bet.bet_number) == int(game_result.panel):
@@ -282,9 +285,15 @@ def update_market_result(request):
                                 else:
                                     obj.bet.result_status = 2
                                     obj.bet.save()
+                                    obj.payment_type = 5
+                                    obj.transaction_type = 1
+                                    obj.save()
                             elif int(obj.player.game.game_type) == 4:
                                 obj.bet.result_status = 2
                                 obj.bet.save()
+                                obj.payment_type = 5
+                                obj.transaction_type = 1
+                                obj.save()
                         elif int(game_result.panel_type) == 2:
                             if int(obj.player.game.game_type) == 4:
                                 if int(obj.bet.bet_number) == int(game_result.panel):
@@ -300,9 +309,15 @@ def update_market_result(request):
                                 else:
                                     obj.bet.result_status = 2
                                     obj.bet.save()
+                                    obj.payment_type = 5
+                                    obj.transaction_type = 1
+                                    obj.save()
                             elif int(obj.player.game.game_type) == 3:
                                 obj.bet.result_status = 2
                                 obj.bet.save()
+                                obj.payment_type = 5
+                                obj.transaction_type = 1
+                                obj.save()
 
                     if int(game_result.market.market_type) == 2:
                         calculate_market_id = int(game_result.market_id) - 1
@@ -330,6 +345,9 @@ def update_market_result(request):
                                     else:
                                         obj.bet.result_status = 2
                                         obj.bet.save()
+                                        obj.payment_type = 5
+                                        obj.transaction_type = 1
+                                        obj.save()
             error = False
             msg = 'Ok'
         except Exception as e:
