@@ -319,35 +319,36 @@ def update_market_result(request):
                                 obj.transaction_type = 1
                                 obj.save()
 
-                    if int(game_result.market.market_type) == 2 and game_result.market.id == obj.player.market.id:
-                        calculate_market_id = int(game_result.market_id) - 1
-                        g_result = GameResult.objects.filter(
-                            market_id=calculate_market_id,
-                            result_date__range=date_range
-                        ).order_by('-id').first()
+                    if game_result.market.id == obj.player.market.id + 1:
+                        if int(game_result.market.market_type) == 2:
+                            calculate_market_id = int(game_result.market_id) - 1
+                            g_result = GameResult.objects.filter(
+                                market_id=calculate_market_id,
+                                result_date__range=date_range
+                            ).order_by('-id').first()
 
-                        if g_result:
-                            if int(obj.player.game.game_type) == 2:
-                                if obj.bet.result_status == 3:
-                                    b = str(obj.bet.bet_number)
-                                    if len(b) == 1:
-                                        b = '0' + b
-                                    if b == str(g_result.single) + str(game_result.single):
-                                        obj.bet.win_amount = obj.bet.bet_amount * 90
-                                        obj.bet.result_status = 1
-                                        u.account_balance += obj.bet.win_amount
-                                        u.save()
-                                        obj.bet.save()
-                                        obj.payment_type = 3
-                                        obj.transaction_type = 2
-                                        obj.balance_amount += u.account_balance
-                                        obj.save()
-                                    else:
-                                        obj.bet.result_status = 2
-                                        obj.bet.save()
-                                        obj.payment_type = 5
-                                        obj.transaction_type = 1
-                                        obj.save()
+                            if g_result:
+                                if int(obj.player.game.game_type) == 2:
+                                    if obj.bet.result_status == 3:
+                                        b = str(obj.bet.bet_number)
+                                        if len(b) == 1:
+                                            b = '0' + b
+                                        if b == str(g_result.single) + str(game_result.single):
+                                            obj.bet.win_amount = obj.bet.bet_amount * 90
+                                            obj.bet.result_status = 1
+                                            u.account_balance += obj.bet.win_amount
+                                            u.save()
+                                            obj.bet.save()
+                                            obj.payment_type = 3
+                                            obj.transaction_type = 2
+                                            obj.balance_amount += u.account_balance
+                                            obj.save()
+                                        else:
+                                            obj.bet.result_status = 2
+                                            obj.bet.save()
+                                            obj.payment_type = 5
+                                            obj.transaction_type = 1
+                                            obj.save()
             error = False
             msg = 'Ok'
         except Exception as e:
