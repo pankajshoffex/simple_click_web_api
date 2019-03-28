@@ -319,7 +319,7 @@ def update_market_result(request):
                                 obj.transaction_type = 1
                                 obj.save()
 
-                    if int(game_result.market.market_type) == 2:
+                    if int(game_result.market.market_type) == 2 and game_result.market.id == obj.player.market.id:
                         calculate_market_id = int(game_result.market_id) - 1
                         g_result = GameResult.objects.filter(
                             market_id=calculate_market_id,
