@@ -137,7 +137,7 @@ def get_payment_history(request):
     try:
         queryset = PaymentHistory.objects.filter(
             user_id=request.user,
-            payment_type__in=[3, 4],
+            payment_type__in=[3, 4, 5],
         ).order_by('-transaction_date').annotate(
             transaction_id=F('id'),
             player_game=F('player__game__name'),
