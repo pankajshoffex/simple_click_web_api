@@ -549,18 +549,18 @@ def get_user_profit_loss(request):
             queryset = PaymentHistory.objects.filter(
                 user_id=user.user_id,
             ).order_by('-transaction_date').values(
-                'payment_type', 'transaction_amount'
+                'payment_type', 'transaction_amount', 'transaction_type'
             )
-            profit = queryset.filter(payment_type=3).aggregate(Sum('transaction_amount'))
+            profit = queryset.filter(payment_type=3, transaction_type=2).aggregate(Sum('transaction_amount'))
             if profit:
                 context_data['profit'] = profit.get('transaction_amount__sum', 0)
-            loss = queryset.filter(payment_type=5).aggregate(Sum('transaction_amount'))
+            loss = queryset.filter(payment_type=5, transaction_type=1).aggregate(Sum('transaction_amount'))
             if loss:
                 context_data['loss'] = loss.get('transaction_amount__sum', 0)
-            withdraw = queryset.filter(payment_type=2).aggregate(Sum('transaction_amount'))
+            withdraw = queryset.filter(payment_type=2, transaction_type=1).aggregate(Sum('transaction_amount'))
             if withdraw:
                 context_data['withdraw'] = withdraw.get('transaction_amount__sum', 0)
-            deposit = queryset.filter(payment_type=1).aggregate(Sum('transaction_amount'))
+            deposit = queryset.filter(payment_type=1, transaction_type=2).aggregate(Sum('transaction_amount'))
             if deposit:
                 context_data['deposit'] = deposit.get('transaction_amount__sum', 0)
             context_data['username'] = user.user.username
