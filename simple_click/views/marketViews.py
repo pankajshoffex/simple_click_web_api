@@ -396,7 +396,7 @@ def daily_result(request):
     error = False
     msg = ''
     result = dict()
-    game_result = GameResult.objects.filter(result_date__range=get_today_range(is_tomorrow_date=True)).values(
+    game_result = GameResult.objects.filter(result_date__range=get_today_range(False, True)).values(
         'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id'
     )
     time_bazaar_open = game_result.filter(market_id=1).order_by('-id').first()
