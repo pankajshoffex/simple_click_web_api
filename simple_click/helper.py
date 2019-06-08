@@ -37,9 +37,11 @@ def generateOTP():
     return OTP
 
 
-def get_today_range(is_past_date=False):
+def get_today_range(is_past_date=False, is_tomorrow_date=False):
     today_min = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
     if is_past_date:
         today_min = datetime.datetime.combine(datetime.date.today() - timedelta(days=1), datetime.time.min)
     today_max = datetime.datetime.combine(datetime.date.today(), datetime.time.max)
+    if is_tomorrow_date:
+        today_min = datetime.datetime.combine(datetime.date.today() + timedelta(hours=7), datetime.time.max)
     return [today_min, today_max]
