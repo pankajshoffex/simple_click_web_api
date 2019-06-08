@@ -14,6 +14,7 @@ urlpatterns = [
     url('customer_list/', userViews.customer_list),
     url('update_customer_balance/', userViews.update_customer_balance),
     url('get_account_balance/', userViews.get_account_balance),
+    url('delete_user/', userViews.delete_user),
     url('market_list/', marketViews.get_market_list_view),
     url('submit_game/', marketViews.submit_game_view),
     url('get_payment_history/', marketViews.get_payment_history),

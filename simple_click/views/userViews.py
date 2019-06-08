@@ -397,7 +397,7 @@ def customer_list(request):
     error = False
     msg = ''
     search = request.GET.get('q')
-    queryset = UserProfile.objects.all()
+    queryset = UserProfile.objects.order_by('id')
     if search:
         queryset = queryset.filter(
             Q(user__id__icontains=search) |
@@ -415,6 +415,22 @@ def customer_list(request):
     context_data['message'] = msg
     context_data['result'] = queryset
     return Response(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def delete_user(request):
+    context_data = dict()
+    user_id = request.data.get('user_id')
+    try:
+        User.objects.get(id=user_id).delete()
+        context_data['error'] = False
+        context_data['message'] = 'User deleted successfully'
+    except Exception as e:
+        context_data['error'] = True
+        context_data['message'] = str(e)
+    return JsonResponse(context_data, status=200)
 
 
 @csrf_exempt
