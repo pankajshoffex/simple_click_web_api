@@ -10,6 +10,13 @@ from datetime import datetime, timedelta
 from simple_click.helper import get_today_range
 
 
+# 1 = 9.5
+GAME_SINGLE_RATE = 9.5
+GAME_JODI_RATE = 95
+GAME_SINGLE_PANEL_RATE = 140
+GAME_DOUBLE_PANEL_RATE = 280
+
+
 def is_time_expired(time_object):
     flag = False
     now = datetime.now() + timedelta(hours=5, minutes=30)
@@ -255,7 +262,7 @@ def update_market_result(request):
                     if game_result.market.id == obj.player.market.id:  # OPEN
                         if int(obj.player.game.game_type) == 1:  # single
                             if int(obj.bet.bet_number) == int(game_result.single):
-                                obj.bet.win_amount = obj.bet.bet_amount * 9
+                                obj.bet.win_amount = obj.bet.bet_amount * GAME_SINGLE_RATE
                                 obj.bet.result_status = 1
                                 u.account_balance += obj.bet.win_amount
                                 u.save()
@@ -273,7 +280,7 @@ def update_market_result(request):
                         if int(game_result.panel_type) == 1:
                             if int(obj.player.game.game_type) == 3:
                                 if int(obj.bet.bet_number) == int(game_result.panel):
-                                    obj.bet.win_amount = obj.bet.bet_amount * 130
+                                    obj.bet.win_amount = obj.bet.bet_amount * GAME_SINGLE_PANEL_RATE
                                     obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
                                     u.save()
@@ -297,7 +304,7 @@ def update_market_result(request):
                         elif int(game_result.panel_type) == 2:
                             if int(obj.player.game.game_type) == 4:
                                 if int(obj.bet.bet_number) == int(game_result.panel):
-                                    obj.bet.win_amount = obj.bet.bet_amount * 260
+                                    obj.bet.win_amount = obj.bet.bet_amount * GAME_DOUBLE_PANEL_RATE
                                     obj.bet.result_status = 1
                                     u.account_balance += obj.bet.win_amount
                                     u.save()
@@ -334,7 +341,7 @@ def update_market_result(request):
                                         if len(b) == 1:
                                             b = '0' + b
                                         if b == str(g_result.single) + str(game_result.single):
-                                            obj.bet.win_amount = obj.bet.bet_amount * 90
+                                            obj.bet.win_amount = obj.bet.bet_amount * GAME_JODI_RATE
                                             obj.bet.result_status = 1
                                             u.account_balance += obj.bet.win_amount
                                             u.save()
