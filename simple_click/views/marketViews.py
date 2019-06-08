@@ -463,7 +463,7 @@ def game_report(request):
     context_data = dict()
     game_result = PaymentHistory.objects.filter(
         player__isnull=False, bet__isnull=False, player__market_id=market,
-        transaction_date__range=get_today_range()
+        transaction_date__range=get_today_range(is_past_date=True)
     )
     result = {}
     for i in game_result:
