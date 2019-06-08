@@ -1,4 +1,6 @@
-from simple_click.models import Market, Game, Player, Payment, PaymentHistory, Bet, UserProfile, GameResult
+from simple_click.models import (
+    Market, Game, Player, Payment, PaymentHistory, Bet, UserProfile, GameResult, SystemPreferences
+)
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
@@ -488,4 +490,29 @@ def game_report(request):
     context_data['error'] = error
     context_data['message'] = msg
     context_data['result'] = result
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+def get_news(request):
+    context_data = dict()
+    try:
+        obj = SystemPreferences.objects.get(key='news')
+        context_data['message'] = obj.value
+    except Exception as e:
+        context_data['message'] = ''
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def add_news(request):
+    context_data = dict()
+    title = request.data.get('title', '')
+    obj, created = SystemPreferences.objects.get_or_create(key='news')
+    obj.value = title
+    obj.save()
+    context_data['error'] = False
+    context_data['message'] = "Updated Successfully"
     return JsonResponse(context_data, status=200)

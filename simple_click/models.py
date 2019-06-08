@@ -119,3 +119,11 @@ class GameResult(models.Model):
     panel = models.IntegerField()
     panel_type = models.IntegerField(choices=PANEL_TYPE, default=1)
     result_date = models.DateTimeField(auto_now_add=True)
+
+
+class SystemPreferences(models.Model):
+    key = models.CharField(max_length=250, unique=True)
+    value = models.TextField()
+
+    def __str__(self):
+        return self.key
