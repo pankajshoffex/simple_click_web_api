@@ -510,9 +510,30 @@ def get_news(request):
 def add_news(request):
     context_data = dict()
     title = request.data.get('title', '')
+    status = request.data.get('status', True)
     obj, created = SystemPreferences.objects.get_or_create(key='news')
     obj.value = title
     obj.save()
+    obj2, created = SystemPreferences.objects.get_or_create(key='system_status')
+    if status:
+        obj2.value = 1
+    else:
+        obj2.value = 0
+    obj2.save()
     context_data['error'] = False
     context_data['message'] = "Updated Successfully"
     return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+def get_system_info(request):
+    context_data = dict()
+    try:
+        obj = SystemPreferences.objects.get(key='system_status')
+        context_data['status'] = int(obj.value)
+    except Exception as e:
+        context_data['status'] = 1
+    return JsonResponse(context_data, status=200)
+
+
+

@@ -24,4 +24,5 @@ urlpatterns = [
     url('game_report/', marketViews.game_report),
     url('get_news/', marketViews.get_news),
     url('add_news/', marketViews.add_news),
+    url('get_system_info/', marketViews.get_system_info),
 ]
