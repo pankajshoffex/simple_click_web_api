@@ -10,6 +10,7 @@ from django.http import JsonResponse
 import pandas as pd
 from datetime import datetime, timedelta
 from simple_click.helper import get_today_range
+from django.db.models import Sum
 
 
 # 1 = 9.5
@@ -536,4 +537,43 @@ def get_system_info(request):
     return JsonResponse(context_data, status=200)
 
 
-
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def get_user_profit_loss(request):
+    context_data = dict()
+    user_id = request.GET.get('user_id')
+    if user_id:
+        try:
+            user = UserProfile.objects.get(user_id=user_id)
+            queryset = PaymentHistory.objects.filter(
+                user_id=user.user_id,
+            ).order_by('-transaction_date').values(
+                'payment_type', 'transaction_amount'
+            )
+            profit = queryset.filter(payment_type=3).aggregate(Sum('transaction_amount'))
+            if profit:
+                context_data['profit'] = profit.get('transaction_amount__sum', 0)
+            loss = queryset.filter(payment_type=5).aggregate(Sum('transaction_amount'))
+            if loss:
+                context_data['loss'] = loss.get('transaction_amount__sum', 0)
+            withdraw = queryset.filter(payment_type=2).aggregate(Sum('transaction_amount'))
+            if withdraw:
+                context_data['withdraw'] = withdraw.get('transaction_amount__sum', 0)
+            deposit = queryset.filter(payment_type=1).aggregate(Sum('transaction_amount'))
+            if deposit:
+                context_data['deposit'] = deposit.get('transaction_amount__sum', 0)
+            context_data['username'] = user.user.username
+        except Exception as e:
+            context_data['profit'] = 0
+            context_data['loss'] = 0
+            context_data['withdraw'] = 0
+            context_data['deposit'] = 0
+            context_data['username'] = ''
+    else:
+        context_data['profit'] = 0
+        context_data['loss'] = 0
+        context_data['withdraw'] = 0
+        context_data['deposit'] = 0
+        context_data['username'] = ''
+    return JsonResponse(context_data, status=200)
