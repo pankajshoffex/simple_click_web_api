@@ -2,6 +2,7 @@ from simple_click.models import (
     Market, Game, Player, Payment, PaymentHistory, Bet, UserProfile, GameResult, SystemPreferences
 )
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -144,9 +145,19 @@ def get_payment_history(request):
     context_data = dict()
     error = False
     msg = ''
+    user_id = request.GET.get('user_id', None)
+    market_id = request.GET.get('market_id', None)
+    user = request.user
+
+    if user_id:
+        try:
+            user = User.objects.get(id=user_id)
+        except Exception as e:
+            user = request.user
+
     try:
         queryset = PaymentHistory.objects.filter(
-            user_id=request.user,
+            user_id=user,
             payment_type__in=[3, 4, 5],
         ).order_by('-transaction_date').annotate(
             transaction_id=F('id'),
@@ -160,9 +171,14 @@ def get_payment_history(request):
             result_status=F('bet__result_status')
         ).values(
             'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
-            'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'player_game_type', 'market_name', 'market_type',
-            'bet_number', 'bet_amount', 'win_amount', 'result_status'
+            'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'player_game_type', 'market_name',
+            'market_type', 'bet_number', 'bet_amount', 'win_amount', 'result_status'
         )
+        if market_id:
+            queryset = queryset.filter(
+                player__market_id=market_id,
+                transaction_date__range=get_today_range(False, True)
+            )
         context_data['result'] = list(queryset)
         error = False
         msg = ''
