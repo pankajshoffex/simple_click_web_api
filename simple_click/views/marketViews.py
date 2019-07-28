@@ -16,7 +16,7 @@ from django.db.models import Sum
 
 # 1 = 9.5
 GAME_SINGLE_RATE = 9.5
-GAME_JODI_RATE = 95
+GAME_JODI_RATE = 90
 GAME_SINGLE_PANEL_RATE = 140
 GAME_DOUBLE_PANEL_RATE = 280
 
@@ -44,7 +44,7 @@ def get_market_type_name(t):
 
 def get_market_list_view(request):
     context_data = dict()
-    queryset = Market.objects.all().values(
+    queryset = Market.objects.filter(is_active=True).order_by('id').values(
         'id', 'market_name', 'market_type', 'market_time'
     )
     data_frame = pd.DataFrame(list(queryset))
@@ -592,4 +592,85 @@ def get_user_profit_loss(request):
         context_data['withdraw'] = 0
         context_data['deposit'] = 0
         context_data['username'] = ''
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def get_admin_market_list(request):
+    context_data = dict()
+    queryset = Market.objects.all().order_by('id').values(
+        'id', 'market_name', 'market_type', 'market_time', 'is_active'
+    )
+    data_frame = pd.DataFrame(list(queryset))
+    data_frame['market_type_name'] = data_frame['market_type'].apply(lambda x: get_market_type_name(x))
+    data_frame['market_time'] = data_frame['market_time'].apply(lambda x: x.strftime('%I:%M %p'))
+    context_data['result'] = data_frame.to_dict(orient='records')
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def create_or_update_market(request):
+    context_data = dict()
+    error = False
+    msg = "Update Successfully"
+    market_id = request.data.get('market_id')
+    market_name = request.data.get('market_name')
+    market_type = request.data.get('market_type')
+    market_time = request.data.get('market_time')
+    is_active = request.data.get('is_active')
+    if not market_name:
+        error = True
+        msg = 'Market Name is required'
+    if not error and not market_type:
+        error = True
+        msg = 'Market Type is required'
+    if not error and not market_time:
+        error = True
+        msg = 'market time is required'
+
+    if not error:
+        try:
+            if market_id:
+                market_object = Market.objects.get(id=market_id)
+                market_object.market_name = market_name
+                market_object.market_type = market_type
+                market_object.market_time = market_time
+                msg = "Update Successfully"
+            else:
+                market_object = Market.objects.create(
+                    market_name=market_name,
+                    market_type=market_type,
+                    market_time=market_time
+                )
+                msg = "save Successfully"
+
+            if is_active:
+                market_object.is_active = True
+            else:
+                market_object.is_active = False
+            market_object.save()
+            error = False
+        except Exception as e:
+            error = True
+            msg = str(e)
+    context_data['error'] = error
+    context_data['message'] = msg
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def get_admin_market_detail(request, pk):
+    context_data = dict()
+    market_object = Market.objects.filter(id=pk).values(
+        'id', 'market_name', 'market_type', 'market_time', 'is_active'
+    ).first()
+    market_object['market_type_name'] = get_market_type_name(market_object.get('market_type'))
+    market_object['market_time'] = market_object.get('market_time').strftime('%I:%M %p')
+    context_data['result'] = market_object
     return JsonResponse(context_data, status=200)

@@ -72,6 +72,7 @@ class Market(models.Model):
     market_type = models.IntegerField(choices=TYPE, default=1)
     market_time = models.TimeField()
     created = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.market_name
