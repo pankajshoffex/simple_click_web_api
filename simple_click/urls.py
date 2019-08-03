@@ -30,4 +30,5 @@ urlpatterns = [
     url('market_admin_list/$', marketViews.get_admin_market_list),
     url('create_or_update_market/$', marketViews.create_or_update_market),
     url('get_admin_market_detail/(?P<pk>[0-9]+)/$', marketViews.get_admin_market_detail),
+    url('daily_transactions/$', userViews.daily_transactions),
 ]

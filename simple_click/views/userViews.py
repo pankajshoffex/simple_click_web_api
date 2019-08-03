@@ -14,7 +14,7 @@ from rest_framework.status import (
 )
 from rest_framework.response import Response
 from simple_click.models import UserProfile, Payment, PaymentHistory
-from simple_click.helper import generateOTP, send_sms
+from simple_click.helper import generateOTP, send_sms, get_today_range
 
 
 @csrf_exempt
@@ -503,4 +503,33 @@ def update_customer_balance(request):
     context_data = dict()
     context_data['error'] = error
     context_data['message'] = msg
+    return Response(context_data, status=HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((IsAuthenticated, ))
+def daily_transactions(request):
+    error = False
+    msg = ''
+    search = request.GET.get('q')
+    transaction_type = request.GET.get('transaction_type', 1)
+    queryset = PaymentHistory.objects.filter(
+        transaction_date__range=get_today_range(),
+        transaction_type=transaction_type
+    ).values(
+        'transaction_date', 'transaction_type', 'transaction_amount', 'balance_amount',
+        username=F('user__username'), user_id=F('user__id'),
+    )
+
+    if search:
+        queryset = queryset.filter(
+            Q(user__id__icontains=search) |
+            Q(user__username__icontains=search)
+        )
+
+    context_data = dict()
+    context_data['error'] = error
+    context_data['message'] = msg
+    context_data['result'] = list(queryset)
     return Response(context_data, status=HTTP_200_OK)
