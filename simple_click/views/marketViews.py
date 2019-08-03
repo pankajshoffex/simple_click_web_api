@@ -405,77 +405,59 @@ def game_result_list(request):
     return JsonResponse(context_data, status=200)
 
 
+def get_result_from_market(market_dict, game_results):
+    result = '%s-%s'
+    try:
+        market_id = market_dict['id']
+        market_type = market_dict['market_type']
+        game_obj = game_results.filter(market_id=market_id).first()
+        panel = 'xxx'
+        single = 'x'
+        if game_obj:
+            panel, single = str(game_obj.get('panel', 'xxx')), str(game_obj.get('single', 'x'))
+        if market_type == 1:
+            result = result % (panel, single)
+        else:
+            result = result % (single, panel)
+    except Exception as e:
+        result = ''
+    return result
+
+
 @csrf_exempt
 @api_view(["GET"])
 @authentication_classes([])
 @permission_classes((AllowAny, ))
 def daily_result(request):
-    error = False
-    msg = ''
-    result = dict()
-    game_result = GameResult.objects.filter(result_date__range=get_today_range(False, True)).values(
-        'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id'
-    )
-    time_bazaar_open = game_result.filter(market_id=1).order_by('-id').first()
-    if time_bazaar_open:
-        time_bazaar_open = dict(time_bazaar_open)
-    time_bazaar_close = game_result.filter(market_id=2).order_by('-id').first()
-    if time_bazaar_close:
-        time_bazaar_close = dict(time_bazaar_close)
-    milan_day_open = game_result.filter(market_id=3).order_by('-id').first()
-    if milan_day_open:
-        milan_day_open = dict(milan_day_open)
-    milan_day_close = game_result.filter(market_id=4).order_by('-id').first()
-    if milan_day_close:
-        milan_day_close = dict(milan_day_close)
-    rajdhani_day_open = game_result.filter(market_id=5).order_by('-id').first()
-    if rajdhani_day_open:
-        rajdhani_day_open = dict(rajdhani_day_open)
-    rajdhani_day_close = game_result.filter(market_id=6).order_by('-id').first()
-    if rajdhani_day_close:
-        rajdhani_day_close = dict(rajdhani_day_close)
-    kalyan_open = game_result.filter(market_id=7).order_by('-id').first()
-    if kalyan_open:
-        kalyan_open = dict(kalyan_open)
-    kalyan_close = game_result.filter(market_id=8).order_by('-id').first()
-    if kalyan_close:
-        kalyan_close = dict(kalyan_close)
-    milan_night_open = game_result.filter(market_id=9).order_by('-id').first()
-    if milan_night_open:
-        milan_night_open = dict(milan_night_open)
-    milan_night_close = game_result.filter(market_id=10).order_by('-id').first()
-    if milan_night_close:
-        milan_night_close = dict(milan_night_close)
-    rajdhani_night_open = game_result.filter(market_id=11).order_by('-id').first()
-    if rajdhani_night_open:
-        rajdhani_night_open = dict(rajdhani_night_open)
-    rajdhani_night_close = game_result.filter(market_id=12).order_by('-id').first()
-    if rajdhani_night_close:
-        rajdhani_night_close = dict(rajdhani_night_close)
-    main_mumbai_open = game_result.filter(market_id=13).order_by('-id').first()
-    if main_mumbai_open:
-        main_mumbai_open = dict(main_mumbai_open)
-    main_mumbai_close = game_result.filter(market_id=14).order_by('-id').first()
-    if main_mumbai_close:
-        main_mumbai_close = dict(main_mumbai_close)
-    result['time_bazaar_open'] = time_bazaar_open
-    result['time_bazaar_close'] = time_bazaar_close
-    result['milan_day_open'] = milan_day_open
-    result['milan_day_close'] = milan_day_close
-    result['rajdhani_day_open'] = rajdhani_day_open
-    result['rajdhani_day_close'] = rajdhani_day_close
-    result['kalyan_open'] = kalyan_open
-    result['kalyan_close'] = kalyan_close
-    result['milan_night_open'] = milan_night_open
-    result['milan_night_close'] = milan_night_close
-    result['rajdhani_night_open'] = rajdhani_night_open
-    result['rajdhani_night_close'] = rajdhani_night_close
-    result['main_mumbai_open'] = main_mumbai_open
-    result['main_mumbai_close'] = main_mumbai_close
+    try:
+        game_result = GameResult.objects.filter(result_date__range=get_today_range(False, True)).values(
+            'single', 'panel', 'panel_type', 'result_date', 'id', 'market_id'
+        )
+        markets_queryset = Market.objects.filter(
+            is_active=True
+        ).order_by('id').values('id', 'market_name', 'market_type')
+        market_df = pd.DataFrame(list(markets_queryset))
+        market_df['game_result'] = market_df.apply(lambda x: get_result_from_market(x, game_result), axis=1)
+        market_df['market_name'] = market_df['market_name'].apply(lambda x: str(x).lower())
+        market_group = market_df.groupby('market_name')
+        result = market_group.apply(lambda x: x[:2].to_dict(orient='records')).to_dict()
+        market_name_list = []
+        for i in markets_queryset.values_list('market_name', flat=True):
+            market_name = str(i).lower()
+            if market_name not in market_name_list:
+                market_name_list.append(market_name)
+        error = False
+        msg = ''
+    except Exception as e:
+        error = True
+        msg = str(e)
+        result = {}
+        market_name_list = []
     context_data = dict()
     context_data['error'] = error
     context_data['message'] = msg
     context_data['result'] = result
+    context_data['market_name_list'] = market_name_list
     return JsonResponse(context_data, status=200)
 
 
