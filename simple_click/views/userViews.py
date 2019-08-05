@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -122,7 +122,7 @@ def new_user(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((AllowAny, ))
+@permission_classes((AllowAny, IsAdminUser))
 def add_payment(request):
     context_data = dict()
     error = False
@@ -392,7 +392,7 @@ def verify_otp(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def customer_list(request):
     error = False
     msg = ''
@@ -419,7 +419,7 @@ def customer_list(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def delete_user(request):
     context_data = dict()
     user_id = request.data.get('user_id')
@@ -435,7 +435,7 @@ def delete_user(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def update_customer_balance(request):
     error = False
     msg = ''
@@ -508,7 +508,7 @@ def update_customer_balance(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def daily_transactions(request):
     error = False
     msg = ''

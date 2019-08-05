@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django.db.models import F
 from django.http import JsonResponse
 import pandas as pd
@@ -226,7 +226,7 @@ def get_customer_balance_history(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def update_market_result(request):
     error = False
     msg = ''
@@ -388,7 +388,7 @@ def update_market_result(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def game_result_list(request):
     error = False
     msg = ''
@@ -463,7 +463,7 @@ def daily_result(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def game_report(request):
     error = False
     msg = ''
@@ -505,7 +505,7 @@ def get_news(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def add_news(request):
     context_data = dict()
     title = request.data.get('title', '')
@@ -537,7 +537,7 @@ def get_system_info(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def get_user_profit_loss(request):
     context_data = dict()
     user_id = request.GET.get('user_id')
@@ -579,7 +579,7 @@ def get_user_profit_loss(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def get_admin_market_list(request):
     context_data = dict()
     queryset = Market.objects.all().order_by('id').values(
@@ -594,7 +594,7 @@ def get_admin_market_list(request):
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def create_or_update_market(request):
     context_data = dict()
     error = False
@@ -646,7 +646,7 @@ def create_or_update_market(request):
 
 @csrf_exempt
 @api_view(["GET"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsAuthenticated, IsAdminUser))
 def get_admin_market_detail(request, pk):
     context_data = dict()
     market_object = Market.objects.filter(id=pk).values(

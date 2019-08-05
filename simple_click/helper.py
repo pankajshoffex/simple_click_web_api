@@ -45,3 +45,4 @@ def get_today_range(is_past_date=False, is_tomorrow_date=False):
     if is_tomorrow_date:
         today_max = datetime.datetime.combine(datetime.date.today() + timedelta(hours=7), datetime.time.max)
     return [today_min, today_max]
+
