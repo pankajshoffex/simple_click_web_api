@@ -513,11 +513,12 @@ def daily_transactions(request):
     error = False
     msg = ''
     search = request.GET.get('q')
-    payment_type = request.GET.get('transaction_type', 1)
+    # Default payment type is withdrawal i.e. 2
+    payment_type = request.GET.get('transaction_type', 2)
     try:
         payment_type = int(payment_type)
     except Exception as e:
-        payment_type = 1
+        payment_type = 2
     queryset = PaymentHistory.objects.filter(
         transaction_date__range=get_today_range(),
         payment_type=payment_type
