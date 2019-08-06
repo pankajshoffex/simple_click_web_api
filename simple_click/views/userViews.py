@@ -523,7 +523,7 @@ def daily_transactions(request):
         transaction_date__range=get_today_range(),
         payment_type=payment_type
     ).values(
-        'transaction_date', 'transaction_type', 'transaction_amount', 'balance_amount',
+        'transaction_date', 'payment_type', 'transaction_amount', 'balance_amount',
         username=F('user__username'), user_id=F('user__id'),
     )
 
