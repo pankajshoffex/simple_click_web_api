@@ -513,10 +513,14 @@ def daily_transactions(request):
     error = False
     msg = ''
     search = request.GET.get('q')
-    transaction_type = request.GET.get('transaction_type', 1)
+    payment_type = request.GET.get('transaction_type', 1)
+    try:
+        payment_type = int(payment_type)
+    except Exception as e:
+        payment_type = 1
     queryset = PaymentHistory.objects.filter(
         transaction_date__range=get_today_range(),
-        transaction_type=transaction_type
+        payment_type=payment_type
     ).values(
         'transaction_date', 'transaction_type', 'transaction_amount', 'balance_amount',
         username=F('user__username'), user_id=F('user__id'),
