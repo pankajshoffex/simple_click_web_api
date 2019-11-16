@@ -12,23 +12,19 @@ import pandas as pd
 from datetime import datetime, timedelta
 from simple_click.helper import get_today_range
 from django.db.models import Sum
+from simple_click import constants
 
 
 # 1 = 9.5
-GAME_SINGLE_RATE = 9
-GAME_JODI_RATE = 90
-GAME_SINGLE_PANEL_RATE = 140
-GAME_DOUBLE_PANEL_RATE = 280
-
 
 def is_time_expired(time_object):
     flag = False
     now = datetime.now() + timedelta(hours=5, minutes=30)
     if now.weekday() == 5:  # Saturday
-        if time_object['id'] in [11, 12, 13, 14]:
+        if time_object['id'] in [11, 12, 13, 14, 15, 16, 17, 18]:
             flag = True
     elif now.weekday() == 6:  # Sunday
-        if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
+        if time_object['id'] in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]:
             flag = True
     if now.time() > time_object['market_time']:
         flag = True
@@ -122,8 +118,8 @@ def submit_game_view(request):
                             user=user_profile.user,
                             player=player_object,
                             bet=bet_object,
-                            payment_type=4,
-                            transaction_type=1,
+                            payment_type=constants.PAYMENT_TYPE_PLAY,
+                            transaction_type=constants.TRANSACTION_TYPE_DEBIT,
                             transaction_amount=bet_object.bet_amount,
                             balance_amount=user_profile.account_balance
                         )
@@ -136,6 +132,19 @@ def submit_game_view(request):
     context_data['error'] = error
     context_data['message'] = msg
     return JsonResponse(context_data, status=200)
+
+
+def can_play_cancel(pay_dict):
+    flag = False
+    condition1 = pay_dict['transaction_date'].date() == datetime.now().date()
+    condition2 = pay_dict['payment_type'] == constants.PAYMENT_TYPE_PLAY
+    if condition1 and condition2:
+        now = datetime.now()
+        if now.time() > pay_dict['market_time']:
+            flag = False
+        else:
+            flag = True
+    return flag
 
 
 @csrf_exempt
@@ -158,13 +167,19 @@ def get_payment_history(request):
     try:
         queryset = PaymentHistory.objects.filter(
             user_id=user,
-            payment_type__in=[3, 4, 5],
+            payment_type__in=[
+                constants.PAYMENT_TYPE_WIN,
+                constants.PAYMENT_TYPE_PLAY,
+                constants.PAYMENT_TYPE_LOSS,
+                constants.PAYMENT_TYPE_CANCELLED
+            ],
         ).order_by('-transaction_date').annotate(
             transaction_id=F('id'),
             player_game=F('player__game__name'),
             player_game_type=F('player__game__game_type'),
             market_name=F('player__market__market_name'),
             market_type=F('player__market__market_type'),
+            market_time=F('player__market__market_time'),
             bet_number=F('bet__bet_number'),
             bet_amount=F('bet__bet_amount'),
             win_amount=F('bet__win_amount'),
@@ -172,14 +187,21 @@ def get_payment_history(request):
         ).values(
             'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
             'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'player_game_type', 'market_name',
-            'market_type', 'bet_number', 'bet_amount', 'win_amount', 'result_status'
+            'market_type', 'bet_number', 'bet_amount', 'win_amount',
+            'result_status', 'market_time'
         )
         if market_id:
             queryset = queryset.filter(
                 player__market_id=market_id,
                 transaction_date__range=get_today_range(False, True)
             )
-        context_data['result'] = list(queryset)
+
+        data_frame = pd.DataFrame(list(queryset))
+        data_frame['can_cancel'] = data_frame.apply(
+            lambda x: can_play_cancel(x), axis=1)
+
+        context_data['result'] = data_frame.to_dict(orient='records')
+        # context_data['result'] = list(queryset)
         error = False
         msg = ''
     except Exception as e:
@@ -201,7 +223,7 @@ def get_customer_balance_history(request):
     try:
         payment_type = int(payment_type)
     except ValueError:
-        payment_type = 1
+        payment_type = constants.PAYMENT_TYPE_DEPOSIT
 
     try:
         queryset = PaymentHistory.objects.filter(
@@ -219,6 +241,52 @@ def get_customer_balance_history(request):
     except Exception as e:
         error = True
         msg = str(e)
+    context_data['error'] = error
+    context_data['message'] = msg
+    return JsonResponse(context_data, status=200)
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((IsAuthenticated, ))
+def cancel_game(request, pk):
+    context_data = dict()
+    error = False
+    msg = 'Sorry you can not cancel the Game.'
+    pay_dict = PaymentHistory.objects.filter(
+        id=pk
+    ).annotate(
+        transaction_id=F('id'),
+        player_game=F('player__game__name'),
+        player_game_type=F('player__game__game_type'),
+        market_name=F('player__market__market_name'),
+        market_type=F('player__market__market_type'),
+        market_time=F('player__market__market_time'),
+        bet_number=F('bet__bet_number'),
+        bet_amount=F('bet__bet_amount'),
+        win_amount=F('bet__win_amount'),
+        result_status=F('bet__result_status')
+    ).values(
+        'transaction_id', 'transaction_date', 'transaction_amount', 'transaction_type', 'balance_amount',
+        'payment_type', 'user_id', 'player_id', 'bet_id', 'player_game', 'player_game_type', 'market_name',
+        'market_type', 'bet_number', 'bet_amount', 'win_amount',
+        'result_status', 'market_time'
+    ).first()
+    payment_history = PaymentHistory.objects.get(id=pk)
+    if payment_history.user.id == request.user.id or request.user.is_superuser:
+        can_cancel = can_play_cancel(pay_dict)
+        if can_cancel:
+            user = UserProfile.objects.get(user=payment_history.user)
+            payment_history.payment_type = constants.PAYMENT_TYPE_CANCELLED
+            payment_history.transaction_type = constants.TRANSACTION_TYPE_CREDIT
+            payment_history.bet.result_status = constants.RESULT_STATUS_CANCELLED
+            payment_history.balance_amount += payment_history.bet.bet_amount
+            user.account_balance += payment_history.bet.bet_amount
+            user.save()
+            payment_history.bet.save()
+            payment_history.save()
+            error = False
+            msg = 'Game cancelled successfully.'
     context_data['error'] = error
     context_data['message'] = msg
     return JsonResponse(context_data, status=200)
@@ -274,79 +342,91 @@ def update_market_result(request):
                     transaction_date__range=date_range,
                     player__isnull=False,
                     bet__isnull=False,
-                    payment_type=4
+                    payment_type=constants.PAYMENT_TYPE_PLAY
                 )
                 for obj in payment_history:
                     u = UserProfile.objects.get(user=obj.player.user)
                     if game_result.market.id == obj.player.market.id:  # OPEN
-                        if int(obj.player.game.game_type) == 1:  # single
+                        if int(obj.player.game.game_type) == constants.GAME_TYPE_SINGLE:
+                            #
+                            # single
                             if int(obj.bet.bet_number) == int(game_result.single):
-                                obj.bet.win_amount = obj.bet.bet_amount * GAME_SINGLE_RATE
-                                obj.bet.result_status = 1
+                                obj.bet.win_amount = obj.bet.bet_amount * \
+                                                     constants.GAME_SINGLE_RATE
+                                obj.bet.result_status = \
+                                    constants.RESULT_STATUS_WIN
                                 u.account_balance += obj.bet.win_amount
                                 u.save()
                                 obj.bet.save()
-                                obj.payment_type = 3
-                                obj.transaction_type = 2
+                                obj.payment_type = constants.PAYMENT_TYPE_WIN
+                                obj.transaction_type = \
+                                    constants.TRANSACTION_TYPE_CREDIT
                                 obj.balance_amount += u.account_balance
                                 obj.save()
                             else:
-                                obj.bet.result_status = 2
+                                obj.bet.result_status = \
+                                    constants.RESULT_STATUS_LOSS
                                 obj.bet.save()
-                                obj.payment_type = 5
-                                obj.transaction_type = 1
+                                obj.payment_type = constants.PAYMENT_TYPE_LOSS
+                                obj.transaction_type = \
+                                    constants.TRANSACTION_TYPE_DEBIT
                                 obj.save()
-                        if int(game_result.panel_type) == 1:
-                            if int(obj.player.game.game_type) == 3:
+                        if int(game_result.panel_type) == constants.PANEL_TYPE_SINGLE:
+                            if int(obj.player.game.game_type) == \
+                                    constants.GAME_TYPE_SINGLE_PANEL:
                                 if int(obj.bet.bet_number) == int(game_result.panel):
-                                    obj.bet.win_amount = obj.bet.bet_amount * GAME_SINGLE_PANEL_RATE
-                                    obj.bet.result_status = 1
+                                    obj.bet.win_amount = obj.bet.bet_amount *\
+                                                         constants.GAME_SINGLE_PANEL_RATE
+                                    obj.bet.result_status = constants.RESULT_STATUS_WIN
                                     u.account_balance += obj.bet.win_amount
                                     u.save()
                                     obj.bet.save()
-                                    obj.payment_type = 3
-                                    obj.transaction_type = 2
+                                    obj.payment_type = constants.PAYMENT_TYPE_WIN
+                                    obj.transaction_type = constants.TRANSACTION_TYPE_CREDIT
                                     obj.balance_amount += u.account_balance
                                     obj.save()
                                 else:
-                                    obj.bet.result_status = 2
+                                    obj.bet.result_status = constants.RESULT_STATUS_LOSS
                                     obj.bet.save()
-                                    obj.payment_type = 5
-                                    obj.transaction_type = 1
+                                    obj.payment_type = constants.PAYMENT_TYPE_LOSS
+                                    obj.transaction_type = constants.TRANSACTION_TYPE_DEBIT
                                     obj.save()
-                            elif int(obj.player.game.game_type) == 4:
-                                obj.bet.result_status = 2
+                            elif int(obj.player.game.game_type) == \
+                                    constants.GAME_TYPE_DOUBLE_PANEL:
+                                obj.bet.result_status = constants.RESULT_STATUS_LOSS
                                 obj.bet.save()
-                                obj.payment_type = 5
-                                obj.transaction_type = 1
+                                obj.payment_type = constants.PAYMENT_TYPE_LOSS
+                                obj.transaction_type = constants.TRANSACTION_TYPE_DEBIT
                                 obj.save()
-                        elif int(game_result.panel_type) == 2:
-                            if int(obj.player.game.game_type) == 4:
+                        elif int(game_result.panel_type) == constants.PANEL_TYPE_DOUBLE:
+                            if int(obj.player.game.game_type) == constants.GAME_TYPE_DOUBLE_PANEL:
                                 if int(obj.bet.bet_number) == int(game_result.panel):
-                                    obj.bet.win_amount = obj.bet.bet_amount * GAME_DOUBLE_PANEL_RATE
-                                    obj.bet.result_status = 1
+                                    obj.bet.win_amount = obj.bet.bet_amount *\
+                                                         constants.GAME_DOUBLE_PANEL_RATE
+                                    obj.bet.result_status = constants.RESULT_STATUS_WIN
                                     u.account_balance += obj.bet.win_amount
                                     u.save()
                                     obj.bet.save()
-                                    obj.payment_type = 3
-                                    obj.transaction_type = 2
+                                    obj.payment_type = constants.PAYMENT_TYPE_WIN
+                                    obj.transaction_type = constants.TRANSACTION_TYPE_CREDIT
                                     obj.balance_amount += u.account_balance
                                     obj.save()
                                 else:
-                                    obj.bet.result_status = 2
+                                    obj.bet.result_status = constants.RESULT_STATUS_LOSS
                                     obj.bet.save()
-                                    obj.payment_type = 5
-                                    obj.transaction_type = 1
+                                    obj.payment_type = constants.PAYMENT_TYPE_LOSS
+                                    obj.transaction_type = constants.TRANSACTION_TYPE_DEBIT
                                     obj.save()
-                            elif int(obj.player.game.game_type) == 3:
-                                obj.bet.result_status = 2
+                            elif int(obj.player.game.game_type) == \
+                                    constants.GAME_TYPE_SINGLE_PANEL:
+                                obj.bet.result_status = constants.RESULT_STATUS_LOSS
                                 obj.bet.save()
-                                obj.payment_type = 5
-                                obj.transaction_type = 1
+                                obj.payment_type = constants.PAYMENT_TYPE_LOSS
+                                obj.transaction_type = constants.TRANSACTION_TYPE_DEBIT
                                 obj.save()
 
                     if game_result.market.id == obj.player.market.id + 1:
-                        if int(game_result.market.market_type) == 2:
+                        if int(game_result.market.market_type) == constants.MARKET_TYPE_CLOSE:
                             calculate_market_id = int(game_result.market_id) - 1
                             g_result = GameResult.objects.filter(
                                 market_id=calculate_market_id,
@@ -354,26 +434,32 @@ def update_market_result(request):
                             ).order_by('-id').first()
 
                             if g_result:
-                                if int(obj.player.game.game_type) == 2:
-                                    if obj.bet.result_status == 3:
+                                if int(obj.player.game.game_type) == \
+                                        constants.GAME_TYPE_JODI:
+                                    if obj.bet.result_status == constants.RESULT_STATUS_PENDING:
                                         b = str(obj.bet.bet_number)
                                         if len(b) == 1:
                                             b = '0' + b
                                         if b == str(g_result.single) + str(game_result.single):
-                                            obj.bet.win_amount = obj.bet.bet_amount * GAME_JODI_RATE
-                                            obj.bet.result_status = 1
+                                            obj.bet.win_amount = \
+                                                obj.bet.bet_amount * \
+                                                constants.GAME_JODI_RATE
+                                            obj.bet.result_status = \
+                                                constants.RESULT_STATUS_WIN
                                             u.account_balance += obj.bet.win_amount
                                             u.save()
                                             obj.bet.save()
-                                            obj.payment_type = 3
-                                            obj.transaction_type = 2
+                                            obj.payment_type = constants.PAYMENT_TYPE_WIN
+                                            obj.transaction_type = constants.TRANSACTION_TYPE_CREDIT
                                             obj.balance_amount += u.account_balance
                                             obj.save()
                                         else:
-                                            obj.bet.result_status = 2
+                                            obj.bet.result_status = \
+                                                constants.RESULT_STATUS_LOSS
                                             obj.bet.save()
-                                            obj.payment_type = 5
-                                            obj.transaction_type = 1
+                                            obj.payment_type = constants.PAYMENT_TYPE_LOSS
+                                            obj.transaction_type = \
+                                                constants.TRANSACTION_TYPE_DEBIT
                                             obj.save()
             error = False
             msg = 'Ok'

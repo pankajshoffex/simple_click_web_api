@@ -1,34 +1,37 @@
 from django.db import models
 from django.contrib.auth.models import User
+from simple_click import constants
 
 
 GAME_STATUS = (
-    (1, 'Pending'),
-    (2, 'Approved')
+    (constants.GAME_STATUS_PENDING, 'Pending'),
+    (constants.GAME_STATUS_APPROVED, 'Approved')
 )
 
 RESULT_STATUS = (
-    (1, 'Win'),
-    (2, 'Loss'),
-    (3, 'Pending')
+    (constants.RESULT_STATUS_WIN, 'Win'),
+    (constants.RESULT_STATUS_LOSS, 'Loss'),
+    (constants.RESULT_STATUS_PENDING, 'Pending'),
+    (constants.RESULT_STATUS_CANCELLED, 'Cancelled')
 )
 
 PAYMENT_TYPE = (
-    (1, 'Deposit'),
-    (2, 'Withdraw'),
-    (3, 'Win'),
-    (4, 'Play'),
-    (5, 'Loss'),
+    (constants.PAYMENT_TYPE_DEPOSIT, 'Deposit'),
+    (constants.PAYMENT_TYPE_WITHDRAW, 'Withdraw'),
+    (constants.PAYMENT_TYPE_WIN, 'Win'),
+    (constants.PAYMENT_TYPE_PLAY, 'Play'),
+    (constants.PAYMENT_TYPE_LOSS, 'Loss'),
+    (constants.PAYMENT_TYPE_CANCELLED, 'Cancelled'),
 )
 
 TRANSACTION_TYPE = (
-    (1, 'Debit'),
-    (2, 'Credit')
+    (constants.TRANSACTION_TYPE_DEBIT, 'Debit'),
+    (constants.TRANSACTION_TYPE_CREDIT, 'Credit')
 )
 
 PANEL_TYPE = (
-    (1, 'Single'),
-    (2, 'Double'),
+    (constants.PANEL_TYPE_SINGLE, 'Single'),
+    (constants.PANEL_TYPE_DOUBLE, 'Double'),
 )
 
 
@@ -65,11 +68,13 @@ class Game(models.Model):
 
 class Market(models.Model):
     TYPE = (
-        (1, 'Open'),
-        (2, 'Close'),
+        (constants.MARKET_TYPE_OPEN, 'Open'),
+        (constants.MARKET_TYPE_CLOSE, 'Close'),
     )
     market_name = models.TextField()
-    market_type = models.IntegerField(choices=TYPE, default=1)
+    market_type = models.IntegerField(
+        choices=TYPE, default=constants.MARKET_TYPE_OPEN
+    )
     market_time = models.TimeField()
     created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -83,7 +88,9 @@ class Player(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
-    status = models.IntegerField(choices=GAME_STATUS, default=1)
+    status = models.IntegerField(
+        choices=GAME_STATUS, default=constants.GAME_STATUS_PENDING
+    )
 
     def __str__(self):
         return self.game.name
@@ -93,7 +100,9 @@ class Bet(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     bet_number = models.IntegerField(default=0)
     bet_amount = models.FloatField(default=0.0)
-    result_status = models.IntegerField(choices=RESULT_STATUS, default=3)
+    result_status = models.IntegerField(
+        choices=RESULT_STATUS, default=constants.RESULT_STATUS_PENDING
+    )
     win_amount = models.FloatField(default=0.0)
 
     def __str__(self):
@@ -118,7 +127,9 @@ class GameResult(models.Model):
     market = models.ForeignKey(Market, on_delete=models.CASCADE)
     single = models.IntegerField()
     panel = models.IntegerField()
-    panel_type = models.IntegerField(choices=PANEL_TYPE, default=1)
+    panel_type = models.IntegerField(
+        choices=PANEL_TYPE, default=constants.PANEL_TYPE_SINGLE
+    )
     result_date = models.DateTimeField(auto_now_add=True)
 
 
