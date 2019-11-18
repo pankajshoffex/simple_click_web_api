@@ -197,8 +197,9 @@ def get_payment_history(request):
             )
 
         data_frame = pd.DataFrame(list(queryset))
-        data_frame['can_cancel'] = data_frame.apply(
-            lambda x: can_play_cancel(x), axis=1)
+        data_frame['can_cancel'] = False
+        # data_frame['can_cancel'] = data_frame.apply(
+        #     lambda x: can_play_cancel(x), axis=1)
 
         context_data['result'] = data_frame.to_dict(orient='records')
         # context_data['result'] = list(queryset)
